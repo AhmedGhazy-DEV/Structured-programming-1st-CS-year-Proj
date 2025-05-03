@@ -1,0 +1,168 @@
+#include <SFML/Graphics.hpp>
+#include <iostream>
+#include <vector>
+#include <string>
+
+using namespace sf;
+using namespace std;
+
+struct DoctorAvailableTime {
+    Text doctorInfo;
+    RectangleShape bookButton;
+    Text bookButtonText;
+};
+
+bool isMouseOver(RectangleShape& box, Vector2f mousePos) {
+    return box.getGlobalBounds().contains(mousePos);
+}
+
+bool isMouseOverText(Text& text, Vector2f mousePos) {
+    return text.getGlobalBounds().contains(mousePos);
+}
+
+int main()
+{
+    RenderWindow window(VideoMode(1000, 700), "Patient Main Page");
+    window.setFramerateLimit(60);
+
+    Font font;
+    if (!font.loadFromFile("DejaVuSans.ttf")) {
+        cout << "Failed to load font!" << endl;
+        return -1;
+    }
+
+    Color backgroundColor(173, 216, 230); // Sky Blue
+
+    // Welcome Text
+    Text welcomeText;
+    welcomeText.setFont(font);
+    welcomeText.setString("Welcome Back, PatientName");
+    welcomeText.setCharacterSize(30);
+    welcomeText.setStyle(sf::Text::Bold);
+    welcomeText.setFillColor(Color(25, 25, 112)); // Dark Blue
+    welcomeText.setPosition(50.f, 20.f);
+
+    // ID Text
+    Text idText;
+    idText.setFont(font);
+    idText.setString("Your ID: 67890");
+    idText.setCharacterSize(24);
+    idText.setFillColor(Color(0, 0, 128)); // Dark Blue
+    idText.setPosition(50.f, 70.f);
+
+    // View My Reservations Button
+    Text viewReservationsButton;
+    viewReservationsButton.setFont(font);
+    viewReservationsButton.setString("View My Reservations");
+    viewReservationsButton.setCharacterSize(20);
+    viewReservationsButton.setFillColor(Color(0, 0, 128));
+    viewReservationsButton.setStyle(Text::Bold);
+    viewReservationsButton.setPosition(720.f, 30.f);
+
+    // List of available doctors
+    vector<DoctorAvailableTime> availableDoctors;
+
+    // Dummy data for doctors
+    vector<tuple<string, string, string>> dummyDoctors = {
+        {"Dr. Smith", "Cardiologist", "10:00 AM"},
+        {"Dr. John", "Dermatologist", "11:30 AM"},
+        {"Dr. Mary", "Neurologist", "2:00 PM"},
+        {"Dr. Lisa", "Dentist", "4:00 PM"},
+        {"Dr. Mark", "Pediatrician", "5:30 PM"},
+        {"Dr. Robert", "Orthopedic", "6:30 PM"},
+        {"Dr. Sophie", "Psychiatrist", "7:00 PM"}
+    };
+
+    // Fill available doctors list
+    for (size_t i = 0; i < dummyDoctors.size(); ++i) {
+        DoctorAvailableTime entry;
+
+        string doctorDetails = get<0>(dummyDoctors[i]) + " - " + get<1>(dummyDoctors[i]) + " - " + get<2>(dummyDoctors[i]);
+
+        entry.doctorInfo.setFont(font);
+        entry.doctorInfo.setString(doctorDetails);
+        entry.doctorInfo.setCharacterSize(22);
+        entry.doctorInfo.setFillColor(Color::Black);
+        entry.doctorInfo.setPosition(60.f, 140.f + i * 80);
+
+        entry.bookButton.setSize(Vector2f(140.f, 40.f));
+        entry.bookButton.setFillColor(Color(30, 144, 255)); // Dodger Blue
+        entry.bookButton.setPosition(700.f, 140.f + i * 80);
+
+        entry.bookButtonText.setFont(font);
+        entry.bookButtonText.setString("Book this time");
+        entry.bookButtonText.setCharacterSize(16);
+        entry.bookButtonText.setFillColor(Color::White);
+        entry.bookButtonText.setPosition(710.f, 150.f + i * 80);
+
+        availableDoctors.push_back(entry);
+    }
+
+    // Scroll control
+    float scrollOffset = 0.f;
+    const float maxScrollOffset = 500.f;
+
+    while (window.isOpen())
+    {
+        Event event;
+        while (window.pollEvent(event))
+        {
+            if (event.type == Event::Closed)
+                window.close();
+
+            if (event.type == Event::MouseButtonPressed && event.mouseButton.button == Mouse::Left)
+            {
+                Vector2f mousePos(event.mouseButton.x, event.mouseButton.y);
+
+                // View Reservations Button clicked
+                if (isMouseOverText(viewReservationsButton, mousePos)) {
+                    cout << "View My Reservations clicked!" << endl;
+                    // Handle switching to reservations page
+                }
+
+                // Book buttons clicked
+                for (size_t i = 0; i < availableDoctors.size(); ++i) {
+                    if (isMouseOver(availableDoctors[i].bookButton, mousePos)) {
+                        cout << "Booked appointment with " << get<0>(dummyDoctors[i]) << endl;
+                        // You can store the booked appointment here
+                    }
+                }
+            }
+
+            // Mouse wheel scroll
+            if (event.type == Event::MouseWheelScrolled) {
+                if (event.mouseWheelScroll.delta > 0) {
+                    scrollOffset = max(0.f, scrollOffset - 20.f);
+                }
+                else {
+                    scrollOffset = min(maxScrollOffset, scrollOffset + 20.f);
+                }
+            }
+        }
+
+        window.clear(backgroundColor);
+
+        window.draw(welcomeText);
+        window.draw(idText);
+        window.draw(viewReservationsButton);
+
+        // Draw available doctors with scrolling
+        for (size_t i = 0; i < availableDoctors.size(); ++i) {
+            float yPos = 140.f + i * 80.f - scrollOffset;
+
+            if (yPos > 80.f && yPos < window.getSize().y) {
+                availableDoctors[i].doctorInfo.setPosition(60.f, yPos);
+                availableDoctors[i].bookButton.setPosition(700.f, yPos);
+                availableDoctors[i].bookButtonText.setPosition(710.f, yPos + 10.f);
+
+                window.draw(availableDoctors[i].doctorInfo);
+                window.draw(availableDoctors[i].bookButton);
+                window.draw(availableDoctors[i].bookButtonText);
+            }
+        }
+
+        window.display();
+    }
+
+    return 0;
+}
