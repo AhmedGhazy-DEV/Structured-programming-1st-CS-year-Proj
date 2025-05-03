@@ -1,0 +1,238 @@
+#include <SFML/Graphics.hpp>
+#include <iostream>
+#include <vector>
+#include <string>
+
+using namespace sf;
+using namespace std;
+
+struct WorkingHourEntry {
+    Text text;
+    RectangleShape editButton;
+    Text editText;
+    RectangleShape deleteButton;
+    Text deleteText;
+};
+
+bool isMouseOver(RectangleShape& box, Vector2f mousePos) {
+    return box.getGlobalBounds().contains(mousePos);
+}
+
+bool isMouseOverText(Text& text, Vector2f mousePos) {
+    return text.getGlobalBounds().contains(mousePos);
+}
+
+int main()
+{
+    RenderWindow window(VideoMode(1000, 700), "Doctor Dashboard");
+    window.setFramerateLimit(60);
+
+    Font font;
+    if (!font.loadFromFile("DejaVuSans.ttf")) {
+        cout << "Failed to load font!" << endl;
+        return -1;
+    }
+
+    Color backgroundColor(173, 216, 230); // Sky Blue
+
+    string doctorName = "John Smith";
+    string doctorID = "12345";
+
+    // Welcome Text
+    Text welcomeText;
+    welcomeText.setFont(font);
+    welcomeText.setString("Welcome, Dr. " + doctorName);
+    welcomeText.setCharacterSize(30);
+    welcomeText.setStyle(sf::Text::Bold);
+    welcomeText.setFillColor(Color(25, 25, 112));
+    welcomeText.setPosition(50.f, 20.f);
+
+    Text idText;
+    idText.setFont(font);
+    idText.setString("Your ID: " + doctorID);
+    idText.setCharacterSize(20);
+    idText.setFillColor(Color(25, 25, 112));
+    idText.setPosition(50.f, 70.f);
+
+    // Input Box
+    RectangleShape workingHoursBox(Vector2f(600.f, 40.f));
+    workingHoursBox.setFillColor(Color::White);
+    workingHoursBox.setOutlineColor(Color(0, 0, 0));
+    workingHoursBox.setOutlineThickness(2.f);
+    workingHoursBox.setPosition(50.f, 150.f);
+
+    Text inputText;
+    inputText.setFont(font);
+    inputText.setString("");
+    inputText.setCharacterSize(20);
+    inputText.setFillColor(Color::Black);
+    inputText.setPosition(60.f, 155.f);
+
+    // Add Time Button
+    RectangleShape addTimeButton(Vector2f(100.f, 40.f));
+    addTimeButton.setFillColor(Color(0, 128, 0)); // Green
+    addTimeButton.setPosition(670.f, 150.f);
+
+    Text addTimeText;
+    addTimeText.setFont(font);
+    addTimeText.setString("Add");
+    addTimeText.setCharacterSize(20);
+    addTimeText.setFillColor(Color::White);
+    addTimeText.setPosition(695.f, 155.f);
+
+    // View Appointments Button
+    Text viewAppointmentsText;
+    viewAppointmentsText.setFont(font);
+    viewAppointmentsText.setString("View Your Appointments");
+    viewAppointmentsText.setCharacterSize(20);
+    viewAppointmentsText.setFillColor(Color(0, 0, 128));
+    viewAppointmentsText.setStyle(Text::Bold);
+    viewAppointmentsText.setPosition(720.f, 20.f);
+
+    // Working hours data
+    vector<WorkingHourEntry> workingHours;
+    float scrollOffset = 0.f;
+    const float maxScrollOffset = 300.f;  // Scrollable area limit (height)
+
+    bool typingActive = false;
+    string currentInput = "";
+
+    while (window.isOpen())
+    {
+        Event event;
+        while (window.pollEvent(event))
+        {
+            if (event.type == Event::Closed)
+                window.close();
+
+            if (event.type == Event::MouseButtonPressed && event.mouseButton.button == Mouse::Left)
+            {
+                Vector2f mousePos(event.mouseButton.x, event.mouseButton.y);
+
+                if (isMouseOver(workingHoursBox, mousePos)) {
+                    typingActive = true;
+                }
+                else if (isMouseOver(addTimeButton, mousePos)) {
+                    if (!currentInput.empty()) {
+                        WorkingHourEntry entry;
+
+                        // Working hour text
+                        entry.text.setFont(font);
+                        entry.text.setString(currentInput);
+                        entry.text.setCharacterSize(20);
+                        entry.text.setFillColor(Color::Black);
+                        entry.text.setPosition(60.f, 220.f + workingHours.size() * 60);
+
+                        // Edit button
+                        entry.editButton.setSize(Vector2f(60.f, 30.f));
+                        entry.editButton.setFillColor(Color(255, 165, 0)); // Orange
+                        entry.editButton.setPosition(500.f, 225.f + workingHours.size() * 60);
+
+                        entry.editText.setFont(font);
+                        entry.editText.setString("Edit");
+                        entry.editText.setCharacterSize(16);
+                        entry.editText.setFillColor(Color::White);
+                        entry.editText.setPosition(510.f, 230.f + workingHours.size() * 60);
+
+                        // Delete button
+                        entry.deleteButton.setSize(Vector2f(70.f, 30.f));
+                        entry.deleteButton.setFillColor(Color(220, 20, 60)); // Crimson Red
+                        entry.deleteButton.setPosition(570.f, 225.f + workingHours.size() * 60);
+
+                        entry.deleteText.setFont(font);
+                        entry.deleteText.setString("Delete");
+                        entry.deleteText.setCharacterSize(16);
+                        entry.deleteText.setFillColor(Color::White);
+                        entry.deleteText.setPosition(580.f, 230.f + workingHours.size() * 60);
+
+                        workingHours.push_back(entry);
+
+                        currentInput.clear();
+                        inputText.setString("");
+                    }
+                }
+                else if (isMouseOverText(viewAppointmentsText, mousePos)) {
+                    cout << "View Appointments Clicked!" << endl;
+                    // You can add moving to another page here later
+                }
+                else {
+                    // Check for edit and delete buttons
+                    for (size_t i = 0; i < workingHours.size(); ++i) {
+                        if (isMouseOver(workingHours[i].editButton, mousePos)) {
+                            cout << "Edit Clicked on entry " << i << endl;
+                            typingActive = true;
+                            currentInput = workingHours[i].text.getString();
+                            inputText.setString(currentInput);
+                            workingHours.erase(workingHours.begin() + i);
+                            break;
+                        }
+                        else if (isMouseOver(workingHours[i].deleteButton, mousePos)) {
+                            cout << "Delete Clicked on entry " << i << endl;
+                            workingHours.erase(workingHours.begin() + i);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (typingActive && event.type == Event::TextEntered)
+            {
+                if (event.text.unicode == 8) { // Backspace
+                    if (!currentInput.empty()) {
+                        currentInput.pop_back();
+                        inputText.setString(currentInput);
+                    }
+                }
+                else if (event.text.unicode < 128 && event.text.unicode >= 32) {
+                    currentInput += static_cast<char>(event.text.unicode);
+                    inputText.setString(currentInput);
+                }
+            }
+
+            if (event.type == Event::MouseWheelMoved) {
+                // Scroll the content when mouse wheel is used
+                if (event.mouseWheel.delta > 0) {
+                    scrollOffset = max(0.f, scrollOffset - 10.f);  // Scroll up
+                }
+                else {
+                    scrollOffset = min(maxScrollOffset, scrollOffset + 10.f);  // Scroll down
+                }
+            }
+        }
+
+        window.clear(backgroundColor);
+
+        window.draw(welcomeText);
+        window.draw(idText);
+
+        window.draw(workingHoursBox);
+        window.draw(inputText);
+
+        window.draw(addTimeButton);
+        window.draw(addTimeText);
+
+        window.draw(viewAppointmentsText);
+
+        // Draw working hours with scrolling offset
+        for (size_t i = 0; i < workingHours.size(); ++i) {
+            float entryPosition = 220.f + i * 60.f - scrollOffset;
+            if (entryPosition > 0.f && entryPosition < window.getSize().y) {  // Only draw visible entries
+                workingHours[i].text.setPosition(60.f, entryPosition);
+                workingHours[i].editButton.setPosition(500.f, entryPosition + 5.f);
+                workingHours[i].editText.setPosition(510.f, entryPosition + 10.f);
+                workingHours[i].deleteButton.setPosition(570.f, entryPosition + 5.f);
+                workingHours[i].deleteText.setPosition(580.f, entryPosition + 10.f);
+
+                window.draw(workingHours[i].text);
+                window.draw(workingHours[i].editButton);
+                window.draw(workingHours[i].editText);
+                window.draw(workingHours[i].deleteButton);
+                window.draw(workingHours[i].deleteText);
+            }
+        }
+
+        window.display();
+    }
+
+    return 0;
+}
