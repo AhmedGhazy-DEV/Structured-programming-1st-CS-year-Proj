@@ -1,0 +1,159 @@
+#include <SFML/Graphics.hpp>
+#include <iostream>
+#include <vector>
+#include <string>
+
+using namespace sf;
+using namespace std;
+
+struct AppointmentEntry {
+    Text appointmentText;
+    RectangleShape deleteButton;
+    Text deleteText;
+};
+
+bool isMouseOver(RectangleShape& box, Vector2f mousePos) {
+    return box.getGlobalBounds().contains(mousePos);
+}
+
+bool isMouseOverText(Text& text, Vector2f mousePos) {
+    return text.getGlobalBounds().contains(mousePos);
+}
+
+int main()
+{
+    RenderWindow window(VideoMode(1000, 700), "Doctor Appointments Page");
+    window.setFramerateLimit(60);
+
+    Font font;
+    if (!font.loadFromFile("DejaVuSans.ttf")) {
+        cout << "Failed to load font!" << endl;
+        return -1;
+    }
+
+    Color backgroundColor(173, 216, 230); // Sky Blue
+
+    // Title: Your Appointments
+    Text titleText;
+    titleText.setFont(font);
+    titleText.setString("Your Reserved Appointments ;)");
+    titleText.setCharacterSize(36);
+    titleText.setFillColor(Color(25, 25, 112)); // Dark Blue
+    titleText.setPosition(60.f, 20.f);
+
+    // Back to Main Page Button
+    Text backButtonText;
+    backButtonText.setFont(font);
+    backButtonText.setString("Back to Main Page");
+    backButtonText.setCharacterSize(20);
+    backButtonText.setFillColor(Color(0, 0, 128)); // Dark Blue
+    backButtonText.setStyle(Text::Bold);
+    backButtonText.setPosition(750.f, 30.f);
+
+    // Appointments list
+    vector<AppointmentEntry> appointments;
+
+    // Dummy data for appointments
+    vector<pair<string, string>> dummyAppointments = {
+        {"10:00 AM", "Alice"},
+        {"11:30 AM", "Bob"},
+        {"2:00 PM", "Charlie"},
+        {"3:30 PM", "David"},
+        {"5:00 PM", "Eve"},
+        {"6:00 PM", "Frank"},
+        {"7:30 PM", "Grace"}
+    };
+
+    // Fill appointments
+    for (size_t i = 0; i < dummyAppointments.size(); ++i) {
+        AppointmentEntry entry;
+
+        string appointmentDetails = dummyAppointments[i].first + " - " + dummyAppointments[i].second;
+
+        entry.appointmentText.setFont(font);
+        entry.appointmentText.setString(appointmentDetails);
+        entry.appointmentText.setCharacterSize(22);
+        entry.appointmentText.setFillColor(Color::Black);
+        entry.appointmentText.setPosition(60.f, 120.f + i * 80);
+
+        entry.deleteButton.setSize(Vector2f(100.f, 40.f));
+        entry.deleteButton.setFillColor(Color(220, 20, 60)); // Crimson Red
+        entry.deleteButton.setPosition(700.f, 120.f + i * 80);
+
+        entry.deleteText.setFont(font);
+        entry.deleteText.setString("Delete");
+        entry.deleteText.setCharacterSize(18);
+        entry.deleteText.setFillColor(Color::White);
+        entry.deleteText.setPosition(715.f, 130.f + i * 80);
+
+        appointments.push_back(entry);
+    }
+
+    // Scroll control
+    float scrollOffset = 0.f;
+    const float maxScrollOffset = 500.f; // Adjust based on number of appointments
+
+    while (window.isOpen())
+    {
+        Event event;
+        while (window.pollEvent(event))
+        {
+            if (event.type == Event::Closed)
+                window.close();
+
+            if (event.type == Event::MouseButtonPressed && event.mouseButton.button == Mouse::Left)
+            {
+                Vector2f mousePos(event.mouseButton.x, event.mouseButton.y);
+
+                // Check Back button click
+                if (isMouseOverText(backButtonText, mousePos)) {
+                    cout << "Back to Main Page clicked!" << endl;
+                    // You can handle page switching here later
+                }
+
+                // Check delete buttons
+                for (size_t i = 0; i < appointments.size(); ++i) {
+                    if (isMouseOver(appointments[i].deleteButton, mousePos)) {
+                        cout << "Delete clicked for appointment " << i << endl;
+                        appointments.erase(appointments.begin() + i);
+                        break;
+                    }
+                }
+            }
+
+            // Mouse wheel scroll
+            if (event.type == Event::MouseWheelScrolled) {
+                if (event.mouseWheelScroll.delta > 0) {
+                    scrollOffset = max(0.f, scrollOffset - 20.f); // Scroll up
+                }
+                else {
+                    scrollOffset = min(maxScrollOffset, scrollOffset + 20.f); // Scroll down
+                }
+            }
+        }
+
+        window.clear(backgroundColor);
+
+        window.draw(titleText);
+        window.draw(backButtonText);
+
+        // Draw appointments with scrolling
+        for (size_t i = 0; i < appointments.size(); ++i) {
+            float yPos = 120.f + i * 80.f - scrollOffset;
+
+            if (yPos > 80.f && yPos < window.getSize().y) { // Draw only visible
+                appointments[i].appointmentText.setPosition(60.f, yPos);
+                appointments[i].deleteButton.setPosition(700.f, yPos);
+                appointments[i].deleteText.setPosition(715.f, yPos + 10.f);
+
+                window.draw(appointments[i].appointmentText);
+                window.draw(appointments[i].deleteButton);
+                window.draw(appointments[i].deleteText);
+            }
+        }
+
+        window.display();
+    }
+
+    return 0;
+}
