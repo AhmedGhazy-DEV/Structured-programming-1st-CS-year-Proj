@@ -1,0 +1,158 @@
+#include <SFML/Graphics.hpp>
+#include <iostream>
+#include <vector>
+#include <string>
+
+using namespace sf;
+using namespace std;
+
+struct ReservationEntry {
+    Text reservationInfo;
+    RectangleShape deleteButton;
+    Text deleteButtonText;
+};
+
+bool isMouseOver(RectangleShape& box, Vector2f mousePos) {
+    return box.getGlobalBounds().contains(mousePos);
+}
+
+bool isMouseOverText(Text& text, Vector2f mousePos) {
+    return text.getGlobalBounds().contains(mousePos);
+}
+
+int main()
+{
+    RenderWindow window(VideoMode(1000, 700), "Patient Reservations Page");
+    window.setFramerateLimit(60);
+
+    Font font;
+    if (!font.loadFromFile("DejaVuSans.ttf")) {
+        cout << "Failed to load font!" << endl;
+        return -1;
+    }
+
+    Color backgroundColor(173, 216, 230); // Sky Blue
+
+    // Title text
+    Text titleText;
+    titleText.setFont(font);
+    titleText.setString("Your Reservations");
+    titleText.setStyle(sf::Text::Bold);
+    titleText.setCharacterSize(30);
+    titleText.setFillColor(Color(25, 25, 112)); // Dark Blue
+    titleText.setPosition(50.f, 20.f);
+
+    // Back to main page button
+    Text backButton;
+    backButton.setFont(font);
+    backButton.setString("Back to Main Page");
+    backButton.setCharacterSize(20);
+    backButton.setFillColor(Color(0, 0, 128));
+    backButton.setStyle(Text::Bold);
+    backButton.setPosition(720.f, 30.f);
+
+    // Dummy reserved appointments
+    vector<tuple<string, string>> dummyReservations = {
+        {"10:00 AM", "Dr. Smith"},
+        {"2:00 PM", "Dr. Mary"},
+        {"5:30 PM", "Dr. Mark"},
+        {"6:30 PM", "Dr. Robert"},
+        {"7:00 PM", "Dr. Sophie"}
+    };
+
+    vector<ReservationEntry> reservations;
+
+    for (size_t i = 0; i < dummyReservations.size(); ++i) {
+        ReservationEntry entry;
+
+        string reservationDetails = "Time: " + get<0>(dummyReservations[i]) + " - Doctor: " + get<1>(dummyReservations[i]);
+
+        entry.reservationInfo.setFont(font);
+        entry.reservationInfo.setString(reservationDetails);
+        entry.reservationInfo.setCharacterSize(22);
+        entry.reservationInfo.setFillColor(Color::Black);
+        entry.reservationInfo.setPosition(60.f, 120.f + i * 80);
+
+        entry.deleteButton.setSize(Vector2f(100.f, 40.f));
+        entry.deleteButton.setFillColor(Color(255, 99, 71)); // Tomato color
+        entry.deleteButton.setPosition(750.f, 120.f + i * 80);
+
+        entry.deleteButtonText.setFont(font);
+        entry.deleteButtonText.setString("Delete");
+        entry.deleteButtonText.setCharacterSize(18);
+        entry.deleteButtonText.setFillColor(Color::White);
+        entry.deleteButtonText.setPosition(765.f, 130.f + i * 80);
+
+        reservations.push_back(entry);
+    }
+
+    // Scroll control
+    float scrollOffset = 0.f;
+    const float maxScrollOffset = 500.f;
+
+    while (window.isOpen())
+    {
+        Event event;
+        while (window.pollEvent(event))
+        {
+            if (event.type == Event::Closed)
+                window.close();
+
+            if (event.type == Event::MouseButtonPressed && event.mouseButton.button == Mouse::Left)
+            {
+                Vector2f mousePos(event.mouseButton.x, event.mouseButton.y);
+
+                // Back to Main Page clicked
+                if (isMouseOverText(backButton, mousePos)) {
+                    cout << "Back to Main Page clicked!" << endl;
+                    // Handle going back to the main page
+                }
+
+                // Handle deleting a reservation
+                for (size_t i = 0; i < reservations.size(); ++i) {
+                    if (isMouseOver(reservations[i].deleteButton, mousePos)) {
+                        cout << "Deleted reservation with " << get<1>(dummyReservations[i]) << endl;
+                        // Actually remove it
+                        dummyReservations.erase(dummyReservations.begin() + i);
+                        reservations.erase(reservations.begin() + i);
+                        break;
+                    }
+                }
+            }
+
+            // Mouse wheel scroll
+            if (event.type == Event::MouseWheelScrolled) {
+                if (event.mouseWheelScroll.delta > 0) {
+                    scrollOffset = max(0.f, scrollOffset - 20.f);
+                }
+                else {
+                    scrollOffset = min(maxScrollOffset, scrollOffset + 20.f);
+                }
+            }
+        }
+
+        window.clear(backgroundColor);
+
+        window.draw(titleText);
+        window.draw(backButton);
+
+        // Draw reservations with scrolling
+        for (size_t i = 0; i < reservations.size(); ++i) {
+            float yPos = 120.f + i * 80.f - scrollOffset;
+
+            if (yPos > 80.f && yPos < window.getSize().y) {
+                reservations[i].reservationInfo.setPosition(60.f, yPos);
+                reservations[i].deleteButton.setPosition(750.f, yPos);
+                reservations[i].deleteButtonText.setPosition(765.f, yPos + 10.f);
+
+                window.draw(reservations[i].reservationInfo);
+                window.draw(reservations[i].deleteButton);
+                window.draw(reservations[i].deleteButtonText);
+            }
+        }
+
+        window.display();
+    }
+
+    return 0;
+}
