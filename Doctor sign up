@@ -1,0 +1,203 @@
+#include <SFML/Graphics.hpp>
+#include <iostream>
+#include <string>
+
+using namespace sf;
+using namespace std;
+
+// Helper function to check if mouse clicked inside a rectangle
+bool isMouseOver(RectangleShape& box, Vector2f mousePos) {
+    return box.getGlobalBounds().contains(mousePos);
+}
+
+bool isMouseOverText(Text& text, Vector2f mousePos) {
+    return text.getGlobalBounds().contains(mousePos);
+}
+
+int main()
+{
+    RenderWindow window(VideoMode(800, 600), "Doctor Sign Up");
+    window.setFramerateLimit(60);
+
+    Font font;
+    if (!font.loadFromFile("DejaVuSans.ttf")) {
+        cout << "Failed to load font!" << endl;
+        return -1;
+    }
+
+    Color backgroundColor(173, 216, 230); // Sky Blue
+
+    // Title
+    Text title;
+    title.setFont(font);
+    title.setString("Doctor Sign Up");
+    title.setCharacterSize(36);
+    title.setFillColor(Color(25, 25, 112)); // Dark Blue
+    title.setStyle(Text::Bold);
+    title.setPosition(220.f, 20.f);
+
+    // ===== Username Label =====
+    Text usernameLabel;
+    usernameLabel.setFont(font);
+    usernameLabel.setString("Username:");
+    usernameLabel.setCharacterSize(20);
+    usernameLabel.setFillColor(Color(0, 0, 128)); // Navy
+    usernameLabel.setPosition(80.f, 110.f);
+
+    // Username Box
+    RectangleShape usernameBox(Vector2f(400.f, 40.f));
+    usernameBox.setFillColor(Color::White);
+    usernameBox.setPosition(200.f, 100.f);
+
+    Text usernameText;
+    usernameText.setFont(font);
+    usernameText.setString("");
+    usernameText.setCharacterSize(20);
+    usernameText.setFillColor(Color::Black);
+    usernameText.setPosition(210.f, 105.f);
+
+    // ===== Password Label =====
+    Text passwordLabel;
+    passwordLabel.setFont(font);
+    passwordLabel.setString("Password:");
+    passwordLabel.setCharacterSize(20);
+    passwordLabel.setFillColor(Color(0, 0, 128)); // Navy
+    passwordLabel.setPosition(80.f, 190.f);
+
+    // Password Box
+    RectangleShape passwordBox(Vector2f(400.f, 40.f));
+    passwordBox.setFillColor(Color::White);
+    passwordBox.setPosition(200.f, 180.f);
+
+    Text passwordText;
+    passwordText.setFont(font);
+    passwordText.setString("");
+    passwordText.setCharacterSize(20);
+    passwordText.setFillColor(Color::Black);
+    passwordText.setPosition(210.f, 185.f);
+
+    // ===== Specialization Label =====
+    Text specializationLabel;
+    specializationLabel.setFont(font);
+    specializationLabel.setString("Specialization:");
+    specializationLabel.setCharacterSize(20);
+    specializationLabel.setFillColor(Color(0, 0, 128)); // Navy
+    specializationLabel.setPosition(60.f, 270.f);
+
+    // Specialization Box
+    RectangleShape specializationBox(Vector2f(400.f, 40.f));
+    specializationBox.setFillColor(Color::White);
+    specializationBox.setPosition(200.f, 260.f);
+
+    Text specializationText;
+    specializationText.setFont(font);
+    specializationText.setString("");
+    specializationText.setCharacterSize(20);
+    specializationText.setFillColor(Color::Black);
+    specializationText.setPosition(210.f, 265.f);
+
+    // Log In Text (bold)
+    Text loginText;
+    loginText.setFont(font);
+    loginText.setString("Already have an account? Log in");
+    loginText.setCharacterSize(20);
+    loginText.setFillColor(Color(0, 0, 128)); // Navy
+    loginText.setStyle(Text::Bold); // BOLD style for "Log in"
+    loginText.setPosition(240.f, 350.f);
+
+    // Track selected input field
+    enum InputField { None, Username, Password, Specialization };
+    InputField selectedField = None;
+
+    string passwordReal;
+
+    while (window.isOpen())
+    {
+        Event event;
+        while (window.pollEvent(event))
+        {
+            if (event.type == Event::Closed)
+                window.close();
+
+            // Mouse click
+            if (event.type == Event::MouseButtonPressed && event.mouseButton.button == Mouse::Left)
+            {
+                Vector2f mousePos(event.mouseButton.x, event.mouseButton.y);
+
+                if (isMouseOver(usernameBox, mousePos)) {
+                    selectedField = Username;
+                }
+                else if (isMouseOver(passwordBox, mousePos)) {
+                    selectedField = Password;
+                }
+                else if (isMouseOver(specializationBox, mousePos)) {
+                    selectedField = Specialization;
+                }
+                else if (isMouseOverText(loginText, mousePos)) {
+                    cout << "Log In link clicked!" << endl;
+                    // Switch to Login Page
+                }
+                else {
+                    selectedField = None;
+                }
+            }
+
+            // Typing
+            if (event.type == Event::TextEntered && selectedField != None)
+            {
+                if (event.text.unicode == 8) { // Backspace
+                    if (selectedField == Username && !usernameText.getString().isEmpty()) {
+                        string s = usernameText.getString();
+                        s.pop_back();
+                        usernameText.setString(s);
+                    }
+                    else if (selectedField == Password && !passwordReal.empty()) {
+                        passwordReal.pop_back();
+                        string masked(passwordReal.size(), '*');
+                        passwordText.setString(masked);
+                    }
+                    else if (selectedField == Specialization && !specializationText.getString().isEmpty()) {
+                        string s = specializationText.getString();
+                        s.pop_back();
+                        specializationText.setString(s);
+                    }
+                }
+                else if (event.text.unicode < 128 && event.text.unicode >= 32) { // Printable characters
+                    if (selectedField == Username) {
+                        usernameText.setString(usernameText.getString() + static_cast<char>(event.text.unicode));
+                    }
+                    else if (selectedField == Password) {
+                        passwordReal += static_cast<char>(event.text.unicode);
+                        string masked(passwordReal.size(), '*');
+                        passwordText.setString(masked);
+                    }
+                    else if (selectedField == Specialization) {
+                        specializationText.setString(specializationText.getString() + static_cast<char>(event.text.unicode));
+                    }
+                }
+            }
+        }
+
+        window.clear(backgroundColor);
+
+        window.draw(title);
+
+        window.draw(usernameLabel);
+        window.draw(usernameBox);
+        window.draw(usernameText);
+
+        window.draw(passwordLabel);
+        window.draw(passwordBox);
+        window.draw(passwordText);
+
+        window.draw(specializationLabel);
+        window.draw(specializationBox);
+        window.draw(specializationText);
+
+        window.draw(loginText);
+
+        window.display();
+    }
+
+    return 0;
+}
