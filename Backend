@@ -1,15 +1,95 @@
-#include<bits/stdc++.h>
+#include <algorithm>
+#include <array>
+#include <atomic>
+#include <bitset>
+#include <cassert>
+#include <ccomplex>
+#include <cctype>
+#include <cerrno>
+#include <cfenv>
+#include <cfloat>
+#include <chrono>
+#include <cinttypes>
+#include <climits>
+#include <clocale>
+#include <cmath>
+#include <complex>
+#include <condition_variable>
+#include <csetjmp>
+#include <csignal>
+#include <cstdarg>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+#include <cwchar>
+#include <cwctype>
+#include <deque>
+#include <exception>
+#include <execution>
+#include <fstream>
+#include <forward_list>
+#include <functional>
+#include <future>
+#include <initializer_list>
+#include <iomanip>
+#include <ios>
+#include <iosfwd>
+#include <iostream>
+#include <istream>
+#include <iterator>
+#include <limits>
+#include <list>
+#include <locale>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <new>
+#include <numeric>
+#include <optional>
+#include <ostream>
+#include <queue>
+#include <random>
+#include <ratio>
+#include <regex>
+#include <scoped_allocator>
+#include <set>
+#include <shared_mutex>
+#include <span>
+#include <sstream>
+#include <stack>
+#include <stdexcept>
+#include <streambuf>
+#include <string>
+#include <string_view>
+#include <system_error>
+#include <thread>
+#include <tuple>
+#include <type_traits>
+#include <typeindex>
+#include <typeinfo>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <valarray>
+#include <variant>
+#include <vector>
 #include<conio.h>
-#include<iostream>
+
 using namespace std;
 const int num_of_patients = 100;
 const int num_of_doctors = 10;
 int times = 7;
-int thisuserindex =0;
-int currentuserindex =-1;
-int currentdoctorindex =-1;
-int thisdoctorindex =0;
-struct account{
+int thisuserindex = 0;
+int currentuserindex = -1;
+int currentdoctorindex = -1;
+int thisdoctorindex = 0;
+string currentusertype = "";
+int tempo;
+
+struct account {
     string username;
     string password;
 };
@@ -17,7 +97,7 @@ struct account{
 struct user {
     account useraccount;
     string name;
-    int ID ;
+    int ID;
 };
 
 struct doctor {
@@ -30,21 +110,23 @@ struct doctor {
 user users[num_of_patients];
 doctor doctors[num_of_doctors];
 
-bool signupusers( user users[], int size);
-bool signupdoctors( doctor doctors[], int size);
+bool signupusers(user users[]);
+bool signupdoctors(doctor doctors[]);
 bool findusernamedoctor(string username, doctor users[]);
 bool findusernameuser(string username, user users[]);
-bool findid(int id, doctor users[]);
+bool finduserid(int id, user users[]);
+bool findDoctorID(int id, doctor doctors[]);
 string passwordinput();
 bool findloginuser(string username, string password, user users[]);
 bool findlogindoctor(string username, string password, doctor doctors[]);
-bool login (user users[]);
+bool login();
 void viewdoctors();
-void addtime(doctor doctors[] , int time);
+void addtime(doctor doctors[]);
 void removetime(doctor doctors[]);
 void edittime(doctor doctors[]);
+void viewtime(doctor doctors[]);
 void book(doctor doctors[]);
-void viewapp(doctor doctors[], string available_time[]);
+void viewapp(doctor doctors[]);
 void removeapp(doctor doctors[]);
 void removeapphistory(doctor doctors[]);
 void viewpatientswithappointments();
@@ -53,13 +135,59 @@ void edituserusername(user users[]);
 void edituserpassword(user users[]);
 void editdoctorusername(doctor doctors[]);
 void editdoctorpassword(doctor doctors[]);
+void writeusers(user users[], int size);
+void readusers(user users[], int& size);
+void writedoctor(doctor doctors[], int size);
+void readdoctor(doctor doctors[], int& size);
+bool welcome();
+void doctorf();
+void patientf();
 
 int main() {
-   
+    cout << "\t\t\t ================================ \n";
+    cout << "\t\t\t Welcome to Rehabilitation Center \n";
+    cout << "\t\t\t ================================ \n\n";
+    int userCount = 0, doctorCount = 0;
+    char choice1, choice2;
+    readusers(users, userCount);
+    readdoctor(doctors, doctorCount);
+    thisuserindex = userCount;
+    thisdoctorindex = doctorCount;
+    do {
+        if (welcome()) {
+            break;
+        }
+    } while (true);
+    if (currentusertype == "doctor") {
+        do {
+            doctorf();
+            cout << "Press any key to logout\nPress Y to keep using your account.";
+            cin >> choice1;
+            if (choice1 != 'y' && choice1 != 'Y') {
+                cout << "Logged out...";
+            }
+        } while (choice1 == 'y' || choice1 == 'Y');
+    }
+    else if (currentusertype == "patient") {
+        do {
+            patientf();
+            cout << "Press any key to logout\nPress Y to keep using your account.";
+            cin >> choice2;
+            if (choice2 != 'y' && choice2 != 'Y') {
+                cout << "Logged out...";
+            }
+        } while (choice2 == 'y' || choice2 == 'Y');
+    }
+    else {
+        cout << "No valid user is currently logged in.\n";
+    }
+
+    writeusers(users, thisuserindex);
+    writedoctor(doctors, thisdoctorindex);
     return 0;
 }
 
-bool signupusers(user users[], int size) {
+bool signupusers(user users[]) {
     int i = thisuserindex;
     cout << "Enter your Username: \n";
     cin >> users[i].useraccount.username;
@@ -68,18 +196,18 @@ bool signupusers(user users[], int size) {
         return false;
     }
     cout << "Enter your password: \n";
-     users[i].useraccount.password = passwordinput();
-     cout << "Enter your name: \n";
-     cin >> users[i].name;
-     do {
-         users[i].ID = (rand() % 100) + 1;
-     } while (findid(users[i].ID, doctors));
-     cout << "Your id is:" << users[i].ID << endl;
-     thisuserindex++;
+    users[i].useraccount.password = passwordinput();
+    cout << "Enter your name: \n";
+    cin >> users[i].name;
+    do {
+        users[i].ID = (rand() % 100) + 1;
+    } while (finduserid(users[i].ID, users));
+    cout << "Your id is:" << users[i].ID << endl;
+    thisuserindex++;
     return true;
 }
 
-bool signupdoctors( doctor doctors[], int size) {
+bool signupdoctors(doctor doctors[]) {
     int i = thisdoctorindex;
     cout << "Enter your Username: \n";
     cin >> doctors[i].doctoraccount.useraccount.username;
@@ -88,20 +216,20 @@ bool signupdoctors( doctor doctors[], int size) {
         return false;
     }
     cout << "Enter your password: \n";
-    doctors[i].doctoraccount.useraccount.password= passwordinput();
+    doctors[i].doctoraccount.useraccount.password = passwordinput();
     cout << "Enter your name: \n";
     cin >> doctors[i].doctoraccount.name;
     do {
         doctors[i].doctoraccount.ID = (rand() % 10) + 1;
-    } while (findid(doctors[i].doctoraccount.ID, doctors));
+    } while (findDoctorID(doctors[i].doctoraccount.ID, doctors));
     cout << "Your id is:" << doctors[i].doctoraccount.ID << endl;
     cout << "Enter your speciality: \n";
     cin >> doctors[i].specialization;
     thisdoctorindex++;
     return true;
 }
-    
-bool findusernamedoctor(string username, doctor doctors[] ) {
+
+bool findusernamedoctor(string username, doctor doctors[]) {
     for (int i = 0; i < thisdoctorindex;i++) {
         if (username == doctors[i].doctoraccount.useraccount.username) {
             return true;
@@ -121,7 +249,7 @@ bool findusernameuser(string username, user users[]) {
 
 bool findloginuser(string username, string password, user users[]) {
     for (int i = 0; i < thisuserindex;i++) {
-        if (username == users[i].useraccount.username && password==users[i].useraccount.password) {
+        if (username == users[i].useraccount.username && password == users[i].useraccount.password) {
             currentuserindex = i;
             return true;
         }
@@ -143,15 +271,25 @@ bool findlogindoctor(string username, string password, doctor doctors[]) {
 string passwordinput() {
     string input = "";
     char ch;
-    while ((ch = _getch()) != '\r') {
-        cout << "*";
-        input += ch;
+    while (true) {
+        ch = _getch();
+        if (ch == '\r') {
+            break;
+        }
+        else if (ch == '\b') {
+            input.pop_back();
+            cout << "\b \b";
+        }
+        else {
+            input += ch;
+            cout << '*';
+        }
     }
     cout << endl;
     return input;
 }
 
-bool login(user users[]) {
+bool login() {
     string username, password;
     cout << "Enter your Username: \n";
     cin >> username;
@@ -159,63 +297,114 @@ bool login(user users[]) {
     password = passwordinput();
 
     if (findloginuser(username, password, users) || findlogindoctor(username, password, doctors)) {
-        cout << "Logged in successfully";
+        cout << "Logged in successfully \n";
+        if (findloginuser(username, password, users)) {
+            currentusertype = "patient";
+        }
+        else if (findlogindoctor(username, password, doctors)) {
+            currentusertype = "doctor";
+        }
         return true;
     }
     else {
-        cout << "Invalid username or password";
+        cout << "Invalid username or password \n";
         return false;
     }
 }
 
-bool findid(int id, doctor users[]) {
+bool finduserid(int id, user users[]) {
     for (int i = 0; i < thisuserindex;i++) {
-        if (id == users[i].doctoraccount.ID) {
+        if (users[i].ID == id) {
             return true;
         }
     }
     return false;
 }
 
-void viewdoctors(){
-    for (int i = 0; i < thisdoctorindex; i++) {
-        cout << doctors[i].doctoraccount.name << doctors[i].specialization << endl;
-}
+bool findDoctorID(int id, doctor doctors[]) {
+    for (int i = 0; i < thisdoctorindex; i++)
+        if (doctors[i].doctoraccount.ID == id) {
+            return true;
+        }
+    return false;
 }
 
-void addtime(doctor doctors[], int time) {
-   // cout << "Number of appointments to take:" << endl;
-   // cin >> time;
-    for (int i = 0; i < times ; i++) {
-        cin >> doctors[i].available_time[i];
+
+
+void addtime(doctor doctors[]) {
+    for (int i = 0; i < times; i++) {
+        cout << i + 1 << ". ";
+        cin >> doctors[currentdoctorindex].available_time[i];
+        cout << endl;
     }
 }
 
-void removetime(doctor doctors[]) {
+void removetime(doctor doctors[]) { /***************/
     int i;//index of time
+    viewtime(doctors);
+    cout << "Choose time slot to remove" << endl;
     cin >> i;
     i -= 1;
     for (int j = i; j < times - 1; ++j) {
-        doctors[currentdoctorindex].available_time[j] = doctors[currentdoctorindex+1].available_time[j+1];
+        doctors[currentdoctorindex].available_time[j] = doctors[currentdoctorindex].available_time[j + 1];
     }
     times--;
+    viewtime(doctors);
 }
 
 void edittime(doctor doctors[]) {
-    string temp;//time wanted to be put
-    int i;//index of time to be edited
+    string temp;
+    int i;
+    viewtime(doctors);
+    cout << "Enter index of time to be edited:\n";
     cin >> i;
+    i -= 1;
+    cout << "Enter time wanted:\n";
     cin >> temp;
     doctors[currentdoctorindex].available_time[i] = temp;
+    viewtime(doctors);
+}
+
+void viewtime(doctor doctors[]) {
+    for (int i = 0;i < times;i++) {
+        cout << i + 1 << ". " << doctors[currentdoctorindex].available_time[i];
+        cout << endl;
+    }
+}
+
+void viewdoctors() {
+    for (int i = 0; i < thisdoctorindex; ++i) {
+        cout << i + 1 << ". Dr. " << doctors[i].doctoraccount.name
+            << " - Specialization: " << doctors[i].specialization << endl;
+    }
 }
 
 void book(doctor doctors[]) {
     int doctor_index, slot_index;
-    cout << "Enter Doctor Index (0 to " << thisdoctorindex - 1 << "): ";
+    viewdoctors();
+    cout << "Enter Doctor Index: ";
     cin >> doctor_index;
-    cout << "Enter Time Slot Index (1 to 7): ";
+    doctor_index -= 1;
+    if (doctor_index < 0 || doctor_index >= thisdoctorindex) {
+        cout << "Invalid doctor index.\n";
+        return;
+    }
+    cout << "\nAvailable Time Slots for Dr. "
+        << doctors[doctor_index].doctoraccount.name << ":\n";
+    for (int i = 0; i < times; ++i) {
+        cout << i + 1 << ". " << doctors[doctor_index].available_time[i];
+        if (doctors[doctor_index].appointment[i]) {
+            cout << " (Booked)";
+        }
+        cout << endl;
+    }
+    cout << "Enter Time Slot Index: ";
     cin >> slot_index;
     slot_index -= 1;
+   if (slot_index < 0 || slot_index >= times) {
+        cout << "Invalid time slot index.\n";
+        return;
+    }
     if (doctors[doctor_index].appointment[slot_index]) {
         cout << "Time slot already booked.\n";
         return;
@@ -223,13 +412,17 @@ void book(doctor doctors[]) {
     string patient_name;
     cout << "Enter your name: ";
     cin >> patient_name;
+
     doctors[doctor_index].appointment[slot_index] = true;
     doctors[doctor_index].patient_names[slot_index] = patient_name;
-    /*cout << "Appointment booked with Dr. " << doctors[doctor_index].doctoraccount.name
-        << " at " << doctors[doctor_index].available_time[slot_index] << "\n";*/
+
+    cout << "Appointment booked with Dr. "
+        << doctors[doctor_index].doctoraccount.name
+        << " at " << doctors[doctor_index].available_time[slot_index] << "\n";
 }
 
-void viewapp(doctor doctors[],string available_time[]) {
+
+void viewapp(doctor doctors[]) {
     for (int i = 0; i < thisdoctorindex; i++) {
         for (int j = 0; j < times; j++) {
             if (doctors[i].appointment[j]) {
@@ -241,12 +434,58 @@ void viewapp(doctor doctors[],string available_time[]) {
 
 void removeapp(doctor doctors[]) {
     int doctor_index, slot_index;
+
+    for (int i = 0; i < thisdoctorindex; ++i) {
+        cout << i + 1 << ". Dr. " << doctors[i].doctoraccount.name
+            << " - Specialization: " << doctors[i].specialization << endl;
+    }
+
+    cout << "Enter Doctor Index (1 to " << thisdoctorindex << "): ";
     cin >> doctor_index;
+    doctor_index -= 1;
+
+    if (doctor_index < 0 || doctor_index >= thisdoctorindex) {
+        cout << "Invalid doctor index.\n";
+        return;
+    }
+
+    cout << "Appointments for Dr. " << doctors[doctor_index].doctoraccount.name << ":\n";
+    for (int i = 0; i < times; ++i) {
+        cout << i + 1 << ". " << doctors[doctor_index].available_time[i];
+        if (doctors[doctor_index].appointment[i]) {
+            cout << " (Booked by " << doctors[doctor_index].patient_names[i] << ")";
+        }
+        else {
+            cout << " (Available)";
+        }
+        cout << endl;
+    }
+
+    cout << "Enter Time Slot (1 to " << times << "): ";
     cin >> slot_index;
     slot_index -= 1;
+
+    if (slot_index < 0 || slot_index >= times) {
+        cout << "Invalid time slot.\n";
+        return;
+    }
+
+    if (!doctors[doctor_index].appointment[slot_index]) {
+        cout << "This time slot is already empty.\n";
+        return;
+    }
+
+    cout << "\nRemoving appointment:\n";
+    cout << "Doctor: Dr. " << doctors[doctor_index].doctoraccount.name << "\n";
+    cout << "Time: " << doctors[doctor_index].available_time[slot_index] << "\n";
+    cout << "Patient: " << doctors[doctor_index].patient_names[slot_index] << "\n";
+
     doctors[doctor_index].appointment[slot_index] = false;
     doctors[doctor_index].patient_names[slot_index] = "";
+
+    cout << "Appointment removed successfully.\n";
 }
+
 
 void removeapphistory(doctor doctors[]) {
     for (int i = 0;i < times;i++) {
@@ -274,6 +513,7 @@ void viewpatientswithappointments() {
 }
 
 void displayAvailableDoctorsAtTime(string time) {
+    cout << "Enter the time you want to search at:\n";
     cin >> time;
     bool found = false;
     cout << "Doctors available at " << time << ":\n";
@@ -295,10 +535,6 @@ void displayAvailableDoctorsAtTime(string time) {
 
 void edituserusername(user users[]) {
     int index = currentuserindex;
-    if (index < 0) {
-        cout << "No user is currently logged in.\n";
-        return;
-    }
     string newusername;
     cout << "Enter new username: ";
     cin >> newusername;
@@ -320,10 +556,6 @@ void edituserpassword(user users[]) {
 
 void editdoctorusername(doctor doctors[]) {
     int index = currentdoctorindex;
-    if (index < 0) {
-        cout << "No doctor is currently logged in.\n";
-        return;
-    }
     string newusername;
     cout << "Enter new username: ";
     cin >> newusername;
@@ -341,4 +573,202 @@ void editdoctorpassword(doctor doctors[]) {
     cout << "Enter new password: ";
     doctors[index].doctoraccount.useraccount.password = passwordinput();
     cout << "Password updated successfully!\n";
+}
+
+void writeusers(user users[], int size) {
+    fstream out("userdata.txt", ios::out);
+    if (!out) {
+        cout << "File not Found";
+        return;
+    }
+    for (int i = 0; i < size; i++) {
+        out << users[i].useraccount.username
+            << " " << users[i].useraccount.password
+            << " " << users[i].name << " "
+            << users[i].ID << endl;
+    }
+    out.close();
+}
+
+void readusers(user users[], int& size) {
+    fstream in("userdata.txt", ios::in);
+    if (!in) {
+        cout << "File not Found";
+        return;
+    }
+    string username, password, name;
+    int ID;
+    size = 0;
+    while (in >> username >> password >> name >> ID) {
+        users[size].useraccount.username = username;
+        users[size].useraccount.password = password;
+        users[size].name = name;
+        users[size].ID = ID;
+        size++;
+    }
+    in.close();
+}
+
+void writedoctor(doctor doctors[], int size) {
+    fstream out("doctordata.txt", ios::out);
+    if (!out) {
+        cout << "File not Found";
+        return;
+    }
+    for (int i = 0; i < size; i++) {
+        out << doctors[i].doctoraccount.useraccount.username << " "
+            << doctors[i].doctoraccount.useraccount.password << " "
+            << doctors[i].doctoraccount.name << " "
+            << doctors[i].doctoraccount.ID << " "
+            << doctors[i].specialization << " ";
+        for (int j = 0; j < times; j++) {
+            out << doctors[i].available_time[j] << " ";
+        }
+        out << endl;
+    }
+    out.close();
+}
+
+void readdoctor(doctor doctors[], int& size) {
+    fstream in("doctordata.txt", ios::in);
+    if (!in) {
+        //cout << "File not Found";
+        return;
+    }
+    string username, password, name, specialization, time;
+    int ID;
+    size = 0;
+    while (in >> username >> password >> name >> ID >> specialization) {
+        doctors[size].doctoraccount.useraccount.username = username;
+        doctors[size].doctoraccount.useraccount.password = password;
+        doctors[size].doctoraccount.name = name;
+        doctors[size].doctoraccount.ID = ID;
+        doctors[size].specialization = specialization;
+        for (int j = 0; j < times; j++) {
+            in >> time;
+            doctors[size].available_time[j] = time;
+        }
+        size++;
+    }
+    in.close();
+}
+
+bool welcome() {
+    int choice;
+    cout << "Choose: \n";
+    cout << "1. To Signup as a doctor.\n";
+    cout << "2. To Signup as a patient.\n";
+    cout << "3. To Log in.\n";
+    cout << "Enter your choice: ";
+    cin >> choice;
+    if (choice == 1) {
+        signupdoctors(doctors);
+        return false;
+    }
+    else if (choice == 2) {
+        signupusers(users);
+        return false;
+    }
+    else if (choice == 3) {
+        return login();
+    }
+    else {
+        cout << "Invalid Choice \n";
+        return false;
+    }
+}
+
+void doctorf() {
+    int choice, choice2;
+    cout << "Choose: \n";
+    cout << "1. Add available time\n";
+    cout << "2. Remove available time\n";
+    cout << "3. Edit available time\n";
+    cout << "4. View Patients with appointments\n";
+    cout << "5. Edit (Username/Password)\n";
+    cout << "Enter your choice: ";
+    cin >> choice;
+    if (choice == 1) {
+        addtime(doctors);
+    }
+    else if (choice == 2) {
+        removetime(doctors);
+    }
+    else if (choice == 3) {
+        edittime(doctors);
+    }
+    else if (choice == 4) {
+        viewpatientswithappointments();
+    }
+    else if (choice == 5) {
+        cout << "Choose: \n";
+        cout << "1. Edit your username\n";
+        cout << "2. Edit your password\n";
+        cout << "Enter your choice: ";
+        cin >> choice2;
+        if (choice2 == 1) {
+            editdoctorusername(doctors);
+        }
+        else if (choice2 == 2) {
+            editdoctorpassword(doctors);
+        }
+        else {
+            cout << "Invalid Choice \n";
+        }
+    }
+    else {
+        cout << "Invalid Choice \n";
+    }
+}
+
+void patientf() {
+    int choice, choice2;
+    cout << "Choose: \n";
+    cout << "1. View Doctors\n";
+    cout << "2. Display doctor available in certain appointment time\n";
+    cout << "3. Book an appointment\n";
+    cout << "4. View Appointments\n";
+    cout << "5. Delete Appointments\n";
+    cout << "6. Delete Appointments History\n";
+    cout << "7. Edit (Username/Password)";
+    cout << "Enter your choice: ";
+    cin >> choice;
+    if (choice == 1) {
+        viewdoctors();
+    }
+    else if (choice == 2) {
+        string time;
+        displayAvailableDoctorsAtTime(time);
+    }
+    else if (choice == 3) {
+        book(doctors);
+    }
+    else if (choice == 4) {
+        viewapp(doctors);
+    }
+    else if (choice == 5) {
+        removeapp(doctors);
+    }
+    else if (choice == 6) {
+        removeapphistory(doctors);
+    }
+    else if (choice == 7) {
+        cout << "Choose: \n";
+        cout << "1. Edit your username\n";
+        cout << "2. Edit your password\n";
+        cout << "Enter your choice: ";
+        cin >> choice2;
+        if (choice2 == 1) {
+            edituserusername(users);
+        }
+        else if (choice2 == 2) {
+            edituserpassword(users);
+        }
+        else {
+            cout << "Invalid Choice \n";
+        }
+    }
+    else {
+        cout << "Invalid Choice \n";
+    }
 }
